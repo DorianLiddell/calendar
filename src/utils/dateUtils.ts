@@ -3,10 +3,11 @@ import 'dayjs/locale/ru';
 import 'dayjs/locale/en';
 import type { DateInfo, LocaleData, Day } from '../types/Types';
 
-
+// Начальная настройка даты
 export const initializeDate = (initialDate: string | undefined, locale: string): DateInfo => {
   dayjs.locale(locale);
 
+  // Проверяем, валидна ли дата
   let dateToUse = dayjs();
   if (initialDate && dayjs(initialDate).isValid()) {
     dateToUse = dayjs(initialDate);
@@ -21,24 +22,24 @@ export const initializeDate = (initialDate: string | undefined, locale: string):
   return result;
 };
 
-// Функция для получения названий месяцев и дней недели
+// Получаем названия месяцев и дней 
 export const getLocaleData = (locale: string): LocaleData => {
   dayjs.locale(locale);
 
   const monthNames: string[] = [];
   for (let i = 0; i < 12; i++) {
-    monthNames.push(dayjs().month(i).format('MMMM'));
+    monthNames.push(dayjs().month(i).locale(locale).format('MMMM'));
   }
 
   const weekdays: string[] = [];
   for (let i = 0; i < 7; i++) {
-    weekdays.push(dayjs().day(i).format('dd'));
+    weekdays.push(dayjs().day(i).locale(locale).format('dd'));
   }
 
   return { monthNames, weekdays };
 };
 
-// Функция для получения дней в месяце
+// Получаем дни месяцев
 export const getDaysInMonth = (month: number, year: number): Day[] => {
   const days: Day[] = [];
   const startOfMonth = dayjs(`${year}-${month + 1}-01`);
@@ -46,13 +47,12 @@ export const getDaysInMonth = (month: number, year: number): Day[] => {
   const startDay = startOfMonth.day() || 7; 
   const numDays = endOfMonth.date();
 
-  // Пустые ячейки перед началом месяца
+  // Пустые ячейки
   for (let i = 1; i < startDay; i++) {
     const emptyDay: Day = { day: '', date: '' };
     days.push(emptyDay);
   }
 
-  // Дни месяца
   for (let i = 1; i <= numDays; i++) {
     const dateString = startOfMonth.date(i).format('YYYY-MM-DD');
     const dayObject: Day = { day: i, date: dateString };
@@ -62,6 +62,7 @@ export const getDaysInMonth = (month: number, year: number): Day[] => {
   return days;
 };
 
+// Является ли дата сегодняшней
 export const isToday = (date: string): boolean => {
   const today = dayjs().format('YYYY-MM-DD');
   return date === today;

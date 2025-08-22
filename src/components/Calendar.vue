@@ -1,27 +1,30 @@
 <template>
   <div class="calendar">
     <Header
+      v-if="monthName && year"
       :monthName="monthName"
       :year="year"
-      @prev-month="prevMonth"
-      @next-month="nextMonth"
+      v-on:prev-month="prevMonth"
+      v-on:next-month="nextMonth"
     />
     <Grid
       :days="daysInMonth"
       :weekdays="weekdays"
       :selectedDate="selectedDate"
-      @select-day="selectDay"
+      v-on:select-day="selectDay"
     />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue';
+import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import Header from './Header.vue';
 import Grid from './Grid.vue';
 import { initializeDate, getLocaleData, getDaysInMonth } from '../utils/dateUtils';
 import type { Day } from '../types/Types';
 import dayjs from 'dayjs';
+
+// Главный компонент календаря
 
 export default defineComponent({
   name: 'Calendar',
@@ -38,56 +41,75 @@ export default defineComponent({
   },
   emits: ['select-date'],
   setup(props, { emit }) {
-    const month = ref<number | null>(null);
-    const year = ref<number | null>(null);
-    const selectedDate = ref<string | null>(null);
+    const month = ref<number>(0);
+    const year = ref<number>(2025);
+    const selectedDate = ref<string>('');
     const monthNames = ref<string[]>([]);
     const weekdays = ref<string[]>([]);
 
     const initializeCalendar = () => {
-      const { month: initMonth, year: initYear, selectedDate: initDate } = initializeDate(props.initialDate, props.locale);
-      month.value = initMonth;
-      year.value = initYear;
-      selectedDate.value = initDate;
+      const dateInfo = initializeDate(props.initialDate, props.locale);
+      month.value = dateInfo.month;
+      year.value = dateInfo.year;
+      selectedDate.value = dateInfo.selectedDate;
+
       updateLocale();
     };
 
+
     const updateLocale = () => {
-      const { monthNames: names, weekdays: days } = getLocaleData(month.value!, year.value!, props.locale);
-      monthNames.value = names;
-      weekdays.value = days;
+      const validLocale = props.locale === 'ru' || props.locale === 'en' ? props.locale : 'ru';
+      const localeData = getLocaleData(validLocale);
+      monthNames.value = localeData.monthNames;
+      weekdays.value = localeData.weekdays;
     };
 
-    const daysInMonth = computed(() => getDaysInMonth(month.value!, year.value!));
+    const daysInMonth = computed(() => {
+      return getDaysInMonth(month.value, year.value);
+    });
 
-    const monthName = computed(() => monthNames.value[month.value!]);
+    const monthName = computed(() => {
+      if (monthNames.value && month.value >= 0) {
+        return monthNames.value[month.value];
+      }
+      return '';
+    });
 
     const prevMonth = () => {
-      month.value!--;
-      if (month.value! < 0) {
-        month.value = 11;
-        year.value!--;
+      let newMonth = month.value - 1;
+      if (newMonth < 0) {
+        newMonth = 11;
+        year.value = year.value - 1;
       }
+      month.value = newMonth;
       updateLocale();
     };
 
     const nextMonth = () => {
-      month.value!++;
-      if (month.value! > 11) {
-        month.value = 0;
-        year.value!++;
+      let newMonth = month.value + 1;
+      if (newMonth > 11) {
+        newMonth = 0;
+        year.value = year.value + 1;
       }
+      month.value = newMonth;
       updateLocale();
     };
 
     const selectDay = (day: Day) => {
-      if (day.date) {
+      if (day.date !== '') {
         selectedDate.value = day.date;
         emit('select-date', day.date);
       }
     };
 
-    onMounted(initializeCalendar);
+    watch(() => props.locale, (newLocale) => {
+      console.log('Изменена на:', newLocale);
+      updateLocale();
+    });
+
+    onMounted(() => {
+      initializeCalendar();
+    });
 
     return {
       monthName,
@@ -105,8 +127,12 @@ export default defineComponent({
 
 <style scoped>
 .calendar {
-  max-width: 400px;
+  width: 400px; 
+  height: 400px; 
   margin: 0 auto;
   font-family: Arial, sans-serif;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 </style>

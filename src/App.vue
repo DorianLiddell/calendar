@@ -1,10 +1,10 @@
 <template>
   <div>
-    <h1>Календарь</h1>
+    <button v-on:click="changeLocale">{{ selectedLocale === 'ru' ? 'Русский' : 'English' }}</button>
     <Calendar
       :initialDate="'2025-08-21'"
-      :locale="'ru'"
-      @select-date="handleDateSelect"
+      :locale="selectedLocale"
+      v-on:select-date="handleDateSelect"
     />
     <p>Выбранная дата: {{ selectedDate }}</p>
   </div>
@@ -15,16 +15,30 @@ import { defineComponent, ref } from 'vue';
 import Calendar from './components/Calendar.vue';
 
 export default defineComponent({
-  components: { Calendar },
+  components: {
+    Calendar,
+  },
   setup() {
-    const selectedDate = ref<string | null>(null);
-
+    const selectedDate = ref<string>('');
+    const selectedLocale = ref<string>('ru');
     const handleDateSelect = (date: string) => {
       selectedDate.value = date;
-      console.log('Выбранная дата:', date);
     };
 
-    return { selectedDate, handleDateSelect };
+    const changeLocale = () => {
+      if (selectedLocale.value === 'ru') {
+        selectedLocale.value = 'en';
+      } else {
+        selectedLocale.value = 'ru';
+      }
+    };
+
+    return {
+      selectedDate,
+      selectedLocale,
+      handleDateSelect,
+      changeLocale,
+    };
   },
 });
 </script>
